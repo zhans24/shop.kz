@@ -1,0 +1,232 @@
+@font-face {
+  font-family: Gotham;
+  font-display: swap;
+  src: url("../font/Gotham-Black.woff2") format("woff2"), url("../font/Gotham-Black.woff") format("woff");
+  font-weight: 900;
+  font-style: normal;
+}
+@font-face {
+  font-family: Gotham;
+  font-display: swap;
+  src: url("../font/Gotham-Medium.woff2") format("woff2"), url("../fonts/Gotham-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: Gotham;
+  font-display: swap;
+  src: url("../font/Gotham-Bold.woff2") format("woff2"), url("../fonts/Gotham-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: Gotham;
+  font-display: swap;
+  src: url("../font/Gotham-BoldItalic.woff2") format("woff2"), url("../fonts/Gotham-BoldItalic.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: Gotham;
+  font-display: swap;
+  src: url("../font/Gotham-Book.woff2") format("woff2"), url("../fonts/Gotham-Book.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+}
+* {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:focus,
+:active {
+  outline: none;
+}
+
+a {
+  transition: 0.3s;
+}
+
+a:focus,
+a:active {
+  outline: none;
+}
+
+nav,
+header,
+footer {
+  display: block;
+}
+
+html,
+body {
+  width: 100%;
+  font-size: 100%;
+  line-height: 1;
+  font-size: 16px;
+  -ms-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+  color: #4c4c4c;
+  font-family: "Gotham", sans-serif;
+  scroll-behavior: smooth;
+  background: #6d031a;
+  overflow-x: hidden;
+  scroll-padding-top: 100px;
+}
+
+html.active {
+  overflow: hidden;
+}
+
+input,
+button,
+textarea {
+  font-family: inherit;
+}
+
+input::-ms-clear {
+  display: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+button::-moz-focus-inner {
+  padding: 0;
+  border: 0;
+}
+
+a,
+a:visited {
+  text-decoration: none;
+}
+
+ul,
+li {
+  list-style: none;
+}
+
+img {
+  vertical-align: top;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: 400px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.container {
+  max-width: 1280px;
+  margin: auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.title {
+  color: #000;
+  text-align: center;
+  font-family: Gotham;
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 30px;
+  /* 100% */
+}
+
+.indent {
+  margin-top: 100px;
+}
+
+.btn-hov {
+  color: #fff;
+  font-family: Gotham;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  border-radius: 20px;
+  background: #1e100f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s;
+  padding: 10px 20px;
+  max-width: 227px;
+}
+
+.novelty__wrapper .btn-hov {
+  margin: 50px auto 0;
+}
+
+.btn-hov:hover {
+  background: #6d031a;
+}
+
+.bg-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+
+@media (max-width: 992px) {
+  .container {
+    max-width: 750px;
+  }
+  .title {
+    font-size: 28px;
+  }
+  .indent {
+    margin-top: 50px;
+  }
+  .btn-hov {
+    font-size: 16px;
+  }
+}
+@media (max-width: 767px) {
+  .container {
+    max-width: none;
+  }
+  .title {
+    font-size: 24px;
+  }
+}
+button {
+  background-color: transparent;
+}/*# sourceMappingURL=main.css.map */

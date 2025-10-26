@@ -10,7 +10,6 @@ return new class extends Migration {
             $t->id();
             $t->foreignId('product_id')->constrained()->cascadeOnDelete();
             $t->string('author_name')->nullable();
-            $t->unsignedTinyInteger('rating'); // 1..5
             $t->text('body')->nullable();
             $t->json('photos')->nullable();
             $t->boolean('is_approved')->default(false);

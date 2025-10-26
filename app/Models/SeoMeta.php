@@ -4,16 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SeoMeta extends Model {
-    protected $casts = ['extra' => 'array'];
-    public function seoable(){ return $this->morphTo(); }
-}
+class SeoMeta extends Model
+{
+    protected $table = 'seo_meta';
 
-/**@mixin
- *
- */
+    protected $fillable = [
+        'meta_title', 'meta_description', 'h1',
+    ];
 
-trait HasSeo {
-    public function seo(){ return $this->morphOne(SeoMeta::class, 'seoable'); }
+    public function seoable()
+    {
+        return $this->morphTo();
+    }
 }
 

@@ -12,10 +12,6 @@ return new class extends Migration {
             $t->string('meta_title')->nullable();
             $t->text('meta_description')->nullable();
             $t->string('h1')->nullable();
-            $t->string('og_title')->nullable();
-            $t->text('og_description')->nullable();
-            $t->string('og_image')->nullable();
-            $t->json('extra')->nullable();
             $t->timestamps();
         });
     }

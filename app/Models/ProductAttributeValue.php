@@ -10,16 +10,19 @@ class ProductAttributeValue extends Model
     use HasFactory;
 
     protected $fillable = [
-        'product_id','attribute_id','attribute_value_id','value',
+        'product_id','attribute_id','attribute_value_id',
+        'value_text','value_number','value_bool',
     ];
 
     protected $casts = [
         'product_id' => 'int',
         'attribute_id' => 'int',
         'attribute_value_id' => 'int',
+        'value_number' => 'decimal:3',
+        'value_bool' => 'bool',
     ];
 
-    public function product()  { return $this->belongsTo(Product::class); }
-    public function attribute(){ return $this->belongsTo(Attribute::class); }
-    public function attributeValue(){ return $this->belongsTo(AttributeValue::class); }
+    public function product()        { return $this->belongsTo(Product::class); }
+    public function attribute()      { return $this->belongsTo(Attribute::class); }
+    public function attributeValue() { return $this->belongsTo(AttributeValue::class); }
 }
