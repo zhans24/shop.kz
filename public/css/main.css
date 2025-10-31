@@ -227,6 +227,14 @@ h6 {
     font-size: 24px;
   }
 }
+
+@media (max-width: 380px) {
+    .auth-form__inner {
+        padding: 40px 10px;
+    }
+}
+
 button {
   background-color: transparent;
 }/*# sourceMappingURL=main.css.map */
+

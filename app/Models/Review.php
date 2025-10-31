@@ -13,29 +13,33 @@ class Review extends Model implements HasMedia
     use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
-        'product_id','author_name','body','is_approved'
+        'product_id',
+        'author_name',
+        'body',
+        'is_approved',
     ];
 
     protected $casts = [
-        'product_id' => 'int',
+        'product_id'  => 'int',
         'is_approved' => 'bool',
     ];
 
+    /* Связи */
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
+    /* Скоупы */
     public function scopeApproved($q)
     {
         return $q->where('is_approved', true);
     }
 
+    /* Медиа */
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('photos')
-            ->useDisk('public')
-            ->onlyKeepLatest(5); // максимум 5 фото на отзыв
+        $this->addMediaCollection('photos')->onlyKeepLatest(5);
     }
 
     public function registerMediaConversions(Media $media = null): void

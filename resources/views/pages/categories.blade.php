@@ -1,11 +1,14 @@
 @extends('layouts.front')
 
 @section('title', $title ?? 'Категории')
-@hasSection('meta_description')
-    @section('meta_description', $desc ?? null)
+@if(!empty($desc))
+    @section('meta_description', $desc)
 @endif
 
+
 @section('content')
+    <main class="pages">
+
     <div class="container">
         <nav class="breadcrumbs" aria-label="Хлебные крошки">
             <ol>
@@ -14,10 +17,9 @@
             </ol>
         </nav>
     </div>
-
     <div class="centeres">
         <section class="categories categories-page">
-            <span>Создаем комфорт</span>
+            <span class="decor-text">Создаем комфорт</span>
 
             <div class="categories__wrapper container">
                 <h2 class="title">{{ $h1 ?? 'Категории товаров' }}</h2>
@@ -83,4 +85,5 @@
             </div>
         </section>
     </div>
+    </main>
 @endsection

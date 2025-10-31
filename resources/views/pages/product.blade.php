@@ -1,8 +1,10 @@
-{{-- resources/views/products/show.blade.php --}}
+{{-- resources/views/pages/products.blade.php --}}
 @extends('layouts.front')
 
 @section('title', $product->name)
-
+@if(!empty($product->seo?->meta_description))
+    @section('meta_description', $product->seo->meta_description)
+@endif
 @section('content')
     <section class="container">
         <h1>{{ $product->name }}</h1>

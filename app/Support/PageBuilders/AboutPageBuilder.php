@@ -11,7 +11,22 @@ final class AboutPageBuilder implements PageBuilder
     {
         $c = $page->content ?? [];
 
-        $image = $page->getFirstMediaUrl('about_image', 'webp') ?: $page->getFirstMediaUrl('about_image');
+        $image = null;
+        $video = null;
+
+        if ($m = $page->getFirstMedia('about_media')) {
+            $mime = (string) $m->mime_type;
+
+            if (str_starts_with($mime, 'image/')) {
+                try {
+                    $image = $m->hasGeneratedConversion('webp') ? $m->getUrl('webp') : $m->getUrl();
+                } catch (\Throwable) {
+                    $image = $m->getUrl();
+                }
+            } elseif (str_starts_with($mime, 'video/')) {
+                $video = $m->getUrl();
+            }
+        }
 
         $reviews = [];
         foreach ((array) data_get($c, 'about.reviews', []) as $r) {
@@ -40,12 +55,14 @@ final class AboutPageBuilder implements PageBuilder
             ],
 
             'decor_text'  => data_get($c, 'about.decor_text'),
-            'image'       => $image,
+            'image'       => $image, // string|null
+            'video'       => $video, // string|null
+
             'about'       => [
                 'title' => data_get($c, 'about.title', $page->title),
                 'text'  => data_get($c, 'about.text'),
             ],
-            'benefits'    => array_values(data_get($c, 'about.benefits', [])), // [{title,text}]
+            'benefits'    => array_values(data_get($c, 'about.benefits', [])),
             'reviews'     => $reviews,
         ];
     }

@@ -13,9 +13,7 @@ class Lead extends Model
         'name',
         'phone',
         'email',
-        'source',
-        'status',
-        'message',
+        'status'
     ];
 
     protected $casts = [

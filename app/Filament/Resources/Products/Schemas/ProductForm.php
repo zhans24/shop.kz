@@ -83,7 +83,7 @@ class ProductForm
 
                         RichEditor::make('description')->label('Описание')->columnSpanFull(),
 
-                        TextInput::make('sku')->label('Артикул')->maxLength(64)->columnSpanFull(),
+                        TextInput::make('sku')->label('Артикул')->required()->maxLength(64)->columnSpanFull(),
                         TextInput::make('price')
                             ->label('Цена')
                             ->numeric()
@@ -91,7 +91,7 @@ class ProductForm
                             ->required()
                             ->suffix('₸'),
                         Toggle::make('is_published')->label('Опубликован')->default(false)->columnSpanFull(),
-                        DateTimePicker::make('published_at')->label('Дата публикации')->columnSpanFull(),
+                        DateTimePicker::make('published_at')->label('Дата публикации')->time(false)->required()->columnSpanFull(),
                         TextInput::make('sort')
                             ->label('Позиция в сайте')
                             ->numeric()
@@ -99,6 +99,8 @@ class ProductForm
                             ->minValue(1)
                             ->step(1)
                             ->rule('integer'),
+                        Toggle::make('is_hit')->label('Хит продаж')->default(false),
+                        TextInput::make('hit_sort')->label('Сорт хита')->numeric()->minValue(1),
                         ])->columns(1),
                     Section::make('Скидка')->schema([
                         Toggle::make('discount_is_forever')

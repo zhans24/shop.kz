@@ -36,7 +36,6 @@
                                         'popular'     => 'По популярности',
                                         'price_asc'   => 'По возрастанию цены',
                                         'price_desc'  => 'По убыванию цены',
-                                        'type'        => 'По типу',
                                     ];
                                     $currentSort = $sortMap[$sort ?? 'popular'] ?? 'По популярности';
                                 @endphp
@@ -52,7 +51,6 @@
                                         <li data-value="popular">По популярности</li>
                                         <li data-value="price_asc">По возрастанию цены</li>
                                         <li data-value="price_desc">По убыванию цены</li>
-                                        <li data-value="type">По типу</li>
                                     </ul>
                                     <input type="hidden" name="sort" value="{{ $sort ?: 'popular' }}">
                                 </div>
@@ -103,8 +101,8 @@
                                 <div class="price-range">
                                     <label>Цена</label>
                                     <div class="inputs">
-                                        <input type="number" id="minPrice" name="price_min" value="{{ $min }}">
-                                        <input type="number" id="maxPrice" name="price_max" value="{{ $max }}">
+                                        <input type="number" id="minPrice" name="price_min" value="{{ $min }}" min="0" max="{{ $limit }}" step="1000">
+                                        <input type="number" id="maxPrice" name="price_max" value="{{ $max }}" min="0" max="{{ $limit }}" step="1000">
                                     </div>
                                     <div class="slider">
                                         <div class="progress" style="left: {{ ($min/$limit)*100 }}%; right: {{ 100 - ($max/$limit)*100 }}%;"></div>
@@ -114,6 +112,10 @@
                                 </div>
 
                                 <button class="filter-btn" type="submit">Поиск</button>
+
+                                <a class="filter-reset-link" href="{{ route('category.show', $category->slug) }}" style="margin-left:12px">                                    Сбросить
+                                </a>
+
                             </div>
 
                             {{-- сохраняем текущую сортировку --}}
@@ -126,7 +128,7 @@
                                 @php
                                     $img = $p->coverUrl('thumb');
                                     $isDiscount = $p->hasActiveDiscount() && $p->discount_percent;
-                                    $priceText = number_format($p->finalPrice(), 0, '.', ' ') . ' ₸';
+                                    $priceText = number_format($p->price, 0, '.', ' ') . ' ₸';
                                 @endphp
 
                                 <a href="{{ route('product.show', $p->slug) }}"
@@ -196,130 +198,70 @@
     </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // --- текст => id/slug
-            const brandText = document.getElementById('brandText');
-            const typeText  = document.getElementById('typeText');
-            const brandId   = document.getElementById('brandId');
-            const typeSlug  = document.getElementById('typeSlug');
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('checkoutForm');
+            if (!form) return;
 
-            function mapBrand() {
-                const val = (brandText.value || '').trim().toLowerCase();
-                let id = '';
-                document.querySelectorAll('#brandList option').forEach(o => {
-                    if ((o.value || '').trim().toLowerCase() === val) { id = o.dataset.id || ''; }
+            // 1) Помечаем обязательные поля БЕЗ изменения разметки
+            const mustHave = ['contact_name', 'phone', 'address'];
+            mustHave.forEach((name) => {
+                const el = form.querySelector(`[name="${name}"]`);
+                if (el) el.required = true;
+            });
+
+            // Телефон: валидируем формат, но только через JS (верстку не трогаем)
+            const phone = form.querySelector('[name="phone"]');
+            if (phone) {
+                phone.setAttribute('pattern', '^\\+?7[\\s\\-]?\\d{3}[\\s\\-]?\\d{3}[\\s\\-]?\\d{2}[\\s\\-]?\\d{2}$');
+                phone.setAttribute('title', 'Введите телефон в формате +7 747 123 45 67');
+                // сбрасываем кастомные сообщения при вводе
+                phone.addEventListener('input', () => phone.setCustomValidity(''));
+            }
+
+            // 2) Радиогруппы: required ставим на ПЕРВУЮ кнопку каждой группы
+            function requireRadioGroup(name) {
+                const radios = form.querySelectorAll(`input[type="radio"][name="${name}"]`);
+                if (radios.length) radios[0].required = true;
+            }
+            ['delivery_method_id', 'customer_type', 'payment_method_id'].forEach(requireRadioGroup);
+
+            // 3) Сайдбар-кнопка: включаем нативную HTML5-валидацию (пузыри у полей)
+            const asideBtn = document.getElementById('asideSubmit');
+            if (asideBtn) {
+                asideBtn.addEventListener('click', (e) => {
+                    // пересчитать итоги перед проверкой, если у тебя есть recalc()
+                    if (typeof recalc === 'function') recalc();
+
+                    // reportValidity() покажет подсказку прямо у проблемного поля
+                    if (form.reportValidity()) {
+                        // ВАЖНО: requestSubmit() — запускает стандартную валидацию и события submit
+                        form.requestSubmit();
+                    }
                 });
-                brandId.value = id; // пусто — значит не фильтруем по бренду
             }
 
-            function mapType() {
-                const val = (typeText.value || '').trim().toLowerCase();
-                let slug = '';
-                document.querySelectorAll('#typeList option').forEach(o => {
-                    if ((o.value || '').trim().toLowerCase() === val) { slug = o.dataset.slug || ''; }
-                });
-                typeSlug.value = slug; // пусто — значит не фильтруем по типу
-            }
+            // 4) Если где-то раньше попал novalidate — уберём, чтобы браузер валидировал сам
+            form.removeAttribute('novalidate');
 
-            brandText && brandText.addEventListener('change', mapBrand);
-            typeText  && typeText.addEventListener('change', mapType);
+            // 5) На всякий случай: при сабмите через кнопку внутри формы браузер и так валидирует
+            // Ничего не меняем — только аккуратно ловим invalid для красивых сообщений
+            form.addEventListener('invalid', (ev) => {
+                const el = ev.target;
+                // кастомные короткие тексты, не меняя верстку
+                const map = {
+                    contact_name: 'Введите ваше имя',
+                    phone: 'Введите телефон в формате +7 747 123 45 67',
+                    address: 'Укажите адрес доставки'
+                };
+                const name = el.getAttribute('name');
+                if (map[name]) el.setCustomValidity(map[name]);
+            }, true);
 
-            // перед сабмитом — финальная синхронизация
-            const filterForm = document.getElementById('filterForm');
-            if (filterForm) {
-                filterForm.addEventListener('submit', function () {
-                    mapBrand(); mapType();
-                });
-            }
-
-            // --- страховка для прогресса (если стили обнулили)
-            const rMin = document.getElementById('rangeMin');
-            const rMax = document.getElementById('rangeMax');
-            const iMin = document.getElementById('minPrice');
-            const iMax = document.getElementById('maxPrice');
-            const progress = document.querySelector('.price-range .progress');
-            const maxAll = rMax ? parseInt(rMax.max,10) : 345000;
-            function syncBar(){
-                if (!progress || !rMin || !rMax) return;
-                const mn = Math.max(0, parseInt(rMin.value||0,10));
-                const mx = Math.max(0, parseInt(rMax.value||0,10));
-                progress.style.left  = (mn / maxAll) * 100 + '%';
-                progress.style.right = 100 - (mx / maxAll) * 100 + '%';
-            }
-            syncBar();
-            ['input','change'].forEach(ev=>{
-                rMin && rMin.addEventListener(ev, syncBar);
-                rMax && rMax.addEventListener(ev, syncBar);
+            // Сброс кастомных сообщений при вводе/изменении
+            form.querySelectorAll('input,select,textarea').forEach((el) => {
+                el.addEventListener('input', () => el.setCustomValidity(''));
+                el.addEventListener('change', () => el.setCustomValidity(''));
             });
         });
-
-        (function(){
-            function makeSuggest(input, optionsSelector, onPick){
-                if(!input) return;
-                input.setAttribute('autocomplete','off');
-
-                const box = document.createElement('ul');
-                box.className = 'filter-suggest';
-                document.body.appendChild(box);
-
-                const all = Array.from(document.querySelectorAll(optionsSelector)).map(o => ({
-                    text: (o.value || '').trim(),
-                    dataset: o.dataset
-                }));
-
-                function position(){
-                    const r = input.getBoundingClientRect();
-                    box.style.left = (window.scrollX + r.left) + 'px';
-                    box.style.top  = (window.scrollY + r.bottom + 4) + 'px';
-                    box.style.width = r.width + 'px';
-                }
-
-                function render(list){
-                    box.innerHTML = '';
-                    list.forEach(row=>{
-                        const li = document.createElement('li');
-                        li.textContent = row.text;
-                        li.addEventListener('click', ()=>{
-                            input.value = row.text;
-                            onPick(row);
-                            hide();
-                            input.dispatchEvent(new Event('change'));
-                        });
-                        box.appendChild(li);
-                    });
-                    box.style.display = list.length ? 'block' : 'none';
-                    position();
-                }
-
-                function hide(){ box.style.display = 'none'; }
-
-                function filter(){
-                    const v = (input.value||'').trim().toLowerCase();
-                    const list = v ? all.filter(x => x.text.toLowerCase().includes(v)) : all;
-                    render(list.slice(0,200));
-                }
-
-                input.addEventListener('focus', filter);
-                input.addEventListener('input', filter);
-                window.addEventListener('resize', position);
-                window.addEventListener('scroll', position, true);
-                document.addEventListener('click', (e)=>{ if(e.target!==input && !box.contains(e.target)) hide(); });
-            }
-
-            const brandText = document.getElementById('brandText');
-            const typeText  = document.getElementById('typeText');
-            const brandId   = document.getElementById('brandId');
-            const typeSlug  = document.getElementById('typeSlug');
-
-            makeSuggest(brandText, '#brandList option', (row)=>{
-            brandId.value = row.dataset.id || '';
-        });
-
-            makeSuggest(typeText, '#typeList option', (row)=>{
-            typeSlug.value = row.dataset.slug || '';
-        });
-        })();
-
-
     </script>
 @endsection

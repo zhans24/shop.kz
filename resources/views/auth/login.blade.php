@@ -1,47 +1,103 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Авторизация — TechnoStyle</title>
+    <link rel="icon" type="image/png" href="{{ asset('img/logo.svg') }}">
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+    @php
+        function vasset($path) {
+            $full = public_path($path);
+            return asset($path).(file_exists($full)?'?v='.filemtime($full):'');
+        }
+    @endphp
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+    <link rel="stylesheet" href="{{ vasset('css/main.css') }}">
+    <link rel="stylesheet" href="{{ vasset('css/styles.css') }}">
+</head>
+<body>
+<div class="wrapper auth">
+
+    @include('partials.header', [
+        'headerTheme' => 'dark',
+        'headerModifier' => 'pages-header__sticky',
+    ])
+
+    <main class="pages">
+        <div class="centeres">
+            <section class="contacts-page">
+                <span class="decor-text">Создаем комфорт</span>
+            </section>
+
+            <section class="auth-form">
+                <div class="container">
+                    <div class="auth-form__inner">
+
+                        <h2 class="auth-form__title">Авторизация</h2>
+
+                        {{-- статус (например "мы отправили ссылку на сброс") --}}
+                        @if (session('status'))
+                            <div class="mb-4 font-medium text-sm text-green-600">
+                                {{ session('status') }}
+                            </div>
+                        @endif
+
+                        <form method="POST" action="{{ route('login') }}" class="form-auth" novalidate>
+                            @csrf
+
+                            {{-- Email --}}
+                            <input
+                                class="form-auth__input @error('email') is-invalid @enderror"
+                                type="email"
+                                name="email"
+                                value="{{ old('email') }}"
+                                placeholder="Email"
+                                required
+                                autocomplete="username"
+                            >
+                            @error('email')
+                            <p class="invalid-feedback" style="display:block">{{ $message }}</p>
+                            @enderror
+
+                            {{-- Пароль --}}
+                            <input
+                                class="form-auth__input @error('password') is-invalid @enderror"
+                                type="password"
+                                name="password"
+                                placeholder="Пароль"
+                                required
+                                autocomplete="current-password"
+                            >
+                            @error('password')
+                            <p class="invalid-feedback" style="display:block">{{ $message }}</p>
+                            @enderror
+
+                            {{-- Запомнить меня --}}
+                            <label class="form-auth__checkbox">
+                                <input type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
+                                <span class="form-auth__checkmark"></span>
+                                <span class="checkbox-text">Запомнить меня</span>
+                            </label>
+
+                            <button type="submit" class="form-auth__btn">Войти</button>
+
+                            <a href="{{ route('password.request') }}" class="form-auth__link">Забыли пароль?</a>
+
+                            <div class="form-auth__link" style="margin-top: 8px;">
+                                Нет аккаунта?
+                                <a href="{{ route('register') }}" style="text-decoration:underline;">Зарегистрируйтесь</a>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </section>
         </div>
+    </main>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+    @include('partials.footer')
+</div>
+</body>
+</html>

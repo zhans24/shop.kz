@@ -37,6 +37,7 @@ class ProductResource extends Resource
     {
         return [
             RelationManagers\AttributesValuesRelationManager::class,
+            RelationManagers\StocksAvailableRelationManager::class,
         ];
     }
 

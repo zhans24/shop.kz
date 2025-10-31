@@ -12,9 +12,7 @@ return new class extends Migration {
             $t->string('name')->nullable();
             $t->string('phone')->nullable();
             $t->string('email')->nullable();
-            $t->string('source')->nullable();
             $t->string('status')->default('new');
-            $t->text('message')->nullable();
             $t->timestamps();
 
             $t->index(['status', 'created_at']);

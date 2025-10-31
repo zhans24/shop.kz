@@ -38,30 +38,27 @@ class Page extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        // уже были:
+        // существующие
         $this->addMediaCollection('hero_left');
         $this->addMediaCollection('hero_right');
 
-        // ABOUT (только картинка)
-        $this->addMediaCollection('about_image');
+        // ABOUT: единая коллекция (фото ИЛИ видео)
+        $this->addMediaCollection('about_media')->singleFile();
 
-        $this->addMediaCollection('delivery_image');            // шапка/картинка секции
-
+        // доставка
+        $this->addMediaCollection('delivery_image');
     }
 
-    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('webp')
-            ->format('webp')
-            ->quality(85)
-            ->performOnCollections(
-                'hero_left', 'hero_right',
-                'about_image',            'delivery_image'
-            )
-            ->nonQueued();
+        // конвертации только для изображений
+        if ($media && str_starts_with((string) $media->mime_type, 'image/')) {
+            $this->addMediaConversion('webp')
+                ->format('webp')
+                ->quality(85)
+                ->nonQueued();
+        }
     }
-
-
 
     protected static function booted(): void {
         $forget = function (self $p) {

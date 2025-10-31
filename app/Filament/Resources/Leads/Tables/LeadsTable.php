@@ -45,7 +45,7 @@ class LeadsTable
                         'done' => 'Завершён',
                     ]),
             ])
-            ->defaultSort('id', 'asc')
+            ->defaultSort('id', 'desc')
             ->recordActions([
                 EditAction::make()->label('Редактировать'),
                 DeleteAction::make()->label('Удалить'),

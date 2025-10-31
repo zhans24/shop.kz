@@ -19,7 +19,7 @@ class PageForm
                 Grid::make(2)->schema([
                     TextInput::make('title')->label('Заголовок')->required(),
                     TextInput::make('slug')->label('Слаг')->required()->unique(ignoreRecord: true),
-                ]),
+                ])->visible(false),
                 Grid::make(3)->schema([
                     TextInput::make('template')
                         ->label('Шаблон')
@@ -27,14 +27,13 @@ class PageForm
                         ->helperText('Напр.: home, about, delivery'),
                     Toggle::make('is_published')->label('Опубликовано')->default(true),
                     DateTimePicker::make('published_at')->label('Дата публикации')->seconds(false)->hidden(), // скрыто, вдруг пригодится
-                ]),
+                ])->visible(false),
                 Grid::make(2)->schema([
                     TextInput::make('meta_title')->label('Meta Title')->maxLength(70),
                     Textarea::make('meta_description')->label('Meta Description')->rows(2)->maxLength(300),
                 ]),
-            ])->columnSpanFull(),
 
-            // Section "Основные данные" как есть...
+            ])->columnSpanFull()->visible(fn ($get) => $get('template') !== 'header'),
 
             Section::make('Главная страница')
                 ->schema([
@@ -76,10 +75,12 @@ class PageForm
                     TextInput::make('content.about.decor_text')
                         ->label('Декор-текст')->maxLength(100),
 
-                    Media::make('about_image')
-                        ->label('Картинка секции')
-                        ->collection('about_image')
-                        ->image()->maxFiles(1),
+                    Media::make('about_media')
+                        ->label('Картинка/видео секции')
+                        ->collection('about_media')
+                        ->acceptedFileTypes(['image/*', 'video/mp4', 'video/webm', 'video/quicktime'])
+                        ->maxFiles(1)
+                        ->openable(),
 
                     Grid::make(2)->schema([
                         TextInput::make('content.about.title')->label('Заголовок блока')->maxLength(120),
@@ -112,6 +113,7 @@ class PageForm
                 ->columns(1)->columnSpanFull()
                 ->visible(fn ($get) => $get('template') === 'about'),
 
+
             Section::make('Доставка и оплата (delivery)')
                 ->schema([
                     TextInput::make('content.delivery.decor_text')
@@ -139,9 +141,6 @@ class PageForm
 
             Section::make('Политика конфиденциальности (privacy)')
                 ->schema([
-                    TextInput::make('content.privacy.decor_text')
-                        ->label('Декор-текст')->maxLength(100),
-
                     TextInput::make('content.privacy.title')
                         ->label('Заголовок H1')->maxLength(180)
                         ->placeholder('Политика конфиденциальности'),
@@ -160,6 +159,41 @@ class PageForm
                 ->columnSpanFull()
                 ->visible(fn ($get) => $get('template') === 'privacy'),
 
+            Section::make('Header (города)')
+                ->schema([
+                    Repeater::make('content.header.cities')
+                        ->label('Города')
+                        ->helperText('Будут показаны в выпадающем списке города в шапке. Один может быть по умолчанию.')
+                        ->reorderable()
+                        ->collapsible()
+                        ->defaultItems(2)
+                        ->schema([
+                            Grid::make(3)->schema([
+                                TextInput::make('name')
+                                    ->label('Название')
+                                    ->placeholder('Алматы')
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, $set) {
+                                        $set('slug', Str::slug((string) $state));
+                                    }),
+
+                                TextInput::make('slug')
+                                    ->label('Слаг')
+                                    ->placeholder('almaty')
+                                    ->helperText('Для URL / сессии')
+                                    ->required(),
+
+                                TextInput::make('sort')
+                                    ->label('Сортировка')
+                                    ->numeric()
+                                    ->helperText('Номер позиции при показе')
+                                    ->placeholder('100'),
+                            ]),
+                        ])
+                ])
+                ->columnSpanFull()
+                ->visible(fn ($get) => $get('template') === 'header'),
 
         ]);
 

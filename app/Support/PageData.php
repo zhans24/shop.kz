@@ -34,16 +34,14 @@ final class PageData
     private static function builderFor(string $template): Contracts\PageBuilder
     {
         return match ($template) {
-            'home'  => new PageBuilders\HomePageBuilder(),
-            'about' => new PageBuilders\AboutPageBuilder(),
+            'home'     => new PageBuilders\HomePageBuilder(),
+            'about'    => new PageBuilders\AboutPageBuilder(),
             'delivery' => new PageBuilders\DeliveryPageBuilder(),
-            default => throw new \RuntimeException("No builder for template [$template]"),
+            'privacy'  => new PageBuilders\PrivacyPageBuilder(),
+            default    => throw new \RuntimeException("No builder for template [$template]"),
         };
-
-
     }
 
-    /** Сгруппировать медиа по section/slot/slide_uid с готовыми URL */
     public static function groupMedia(Page $page, string $collection = 'page_images'): array
     {
         $media = $page->getMedia($collection);

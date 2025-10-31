@@ -54,6 +54,7 @@ class Product extends Model implements HasMedia
         'is_published','published_at','price','sort','sku',
 
         'discount_percent','discount_is_forever','discount_starts_at','discount_ends_at',
+        'is_hit','hit_sort',
     ];
 
     protected $casts = [
@@ -67,10 +68,12 @@ class Product extends Model implements HasMedia
         'discount_is_forever'  => 'bool',
         'discount_starts_at'   => 'datetime',
         'discount_ends_at'     => 'datetime',
+
+        'is_hit'               => 'bool',
+        'hit_sort'             => 'int',
     ];
 
-    protected $with = ['media'];
-
+    protected $with = ['media','seo'];
     protected function discountStartsAt(): Attribute
     {
         return Attribute::make(
@@ -93,12 +96,12 @@ class Product extends Model implements HasMedia
     public function attributesValues() { return $this->hasMany(ProductAttributeValue::class); }
     public function reviews()  { return $this->hasMany(Review::class); }
 
-    public function collections()
+
+    public function scopeHits(Builder $q): Builder
     {
-        return $this->belongsToMany(Collection::class, 'collection_product')
-            ->withTimestamps()
-            ->withPivot('sort')
-            ->orderBy('pivot_sort');
+        return $q->where('is_hit', true)
+            ->orderByRaw('CASE WHEN hit_sort IS NULL THEN 1 ELSE 0 END, hit_sort ASC')
+            ->orderBy('published_at', 'desc');
     }
 
     public function scopePublished(Builder $q): Builder
@@ -178,19 +181,40 @@ class Product extends Model implements HasMedia
             ->when(isset($f['price_max']) && $f['price_max'] !== '', fn ($q) => $q->where('price', '<=', (float) $f['price_max']));
     }
 
+    public function stocks()
+    {
+        return $this->hasMany(\App\Models\ProductStock::class);
+    }
+
+    public function availabilityByCity(): array
+    {
+        return $this->stocks
+            ->mapWithKeys(fn($s) => [ $s->city_name => (bool)$s->is_available ])
+            ->all();
+    }
+
+    public function inStockSomewhere(): bool
+    {
+        return $this->stocks->contains(fn($s) => (bool)$s->is_available);
+    }
+
+
     public function scopeSortBy(Builder $q, ?string $sort): Builder
     {
         return match ($sort) {
             'price_asc'  => $q->orderBy('price', 'asc'),
             'price_desc' => $q->orderBy('price', 'desc'),
-            'type'       => $q->leftJoin('product_attribute_values as pav', function ($join) {
-                $join->on('pav.product_id', '=', 'products.id');
-            })->leftJoin('attributes as a', function ($join) {
-                $join->on('a.id', '=', 'pav.attribute_id')->where('a.code', 'type');
-            })->orderByRaw('COALESCE(pav.value_text, \'\') ASC')
-                ->select('products.*'),
-            'popular', null, '' => $q->orderBy('published_at', 'desc'),
+
+            'popular', null, '' => $q
+                ->withCount(['reviews as approved_reviews_count' => function ($r) {
+                    $r->where('is_approved', true);
+                }])
+                ->orderByDesc('approved_reviews_count')
+                ->orderByDesc('published_at'),
+
             default      => $q->orderBy('published_at', 'desc'),
         };
     }
+
+
 }

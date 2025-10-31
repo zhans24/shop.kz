@@ -16,26 +16,34 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
+        return view('pages.profile', [
             'user' => $request->user(),
         ]);
     }
+
 
     /**
      * Update the user's profile information.
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $data = $request->validated();
+
+        if (isset($data['email']) && $data['email'] !== $user->email) {
+            $user->email = $data['email'];
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->name  = $data['name']  ?? $user->name;
+        $user->phone = $data['phone'] ?? $user->phone;
+
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
+
 
     /**
      * Delete the user's account.

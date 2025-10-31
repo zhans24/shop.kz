@@ -1,5 +1,6 @@
 <?php
 
+// app/Filament/Resources/Posts/PostResource.php
 namespace App\Filament\Resources\Posts;
 
 use App\Filament\Resources\Posts\Pages\CreatePost;
@@ -18,35 +19,22 @@ class PostResource extends Resource
 {
     protected static ?string $model = Post::class;
 
-    protected static string|null|\UnitEnum $navigationGroup   = 'Контент';
-    protected static string|null|BackedEnum $navigationIcon    = 'heroicon-o-megaphone';
-    protected static ?int    $navigationSort    = 21;
-    protected static ?string $modelLabel        = 'Новость / Акция';
-    protected static ?string $pluralModelLabel  = 'Новости / акции';
+    protected static string|null|\UnitEnum $navigationGroup  = 'Контент';
+    protected static string|null|BackedEnum $navigationIcon  = 'heroicon-o-megaphone';
+    protected static ?int    $navigationSort = 21;
+    protected static ?string $modelLabel       = 'Новость / Акция';
+    protected static ?string $pluralModelLabel = 'Новости / акции';
 
-    public static function form(Schema $schema): Schema
-    {
-        return PostForm::configure($schema);
-    }
-
-    public static function table(Table $table): Table
-    {
-        return PostsTable::configure($table);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
+    public static function form(Schema $schema): Schema     { return PostForm::configure($schema); }
+    public static function table(Table $table): Table       { return PostsTable::configure($table); }
+    public static function getRelations(): array            { return []; }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListPosts::route('/'),
+            'index'  => ListPosts::route('/'),
             'create' => CreatePost::route('/create'),
-            'edit' => EditPost::route('/{record}/edit'),
+            'edit'   => EditPost::route('/{record}/edit'),
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\ContactSetting;
+use App\Services\ContactNormalizer;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -25,7 +26,6 @@ class ContactSettings extends Page implements HasSchemas
     protected static string|null|\UnitEnum $navigationGroup = 'Управление';
     protected static ?int    $navigationSort  = 10;
 
-    // кастомный blade, чтобы ограничить ширину контейнера
     protected string $view = 'filament.pages.contact-settings';
 
     public ?array $data = [];
@@ -34,17 +34,28 @@ class ContactSettings extends Page implements HasSchemas
     {
         $s = ContactSetting::singleton();
 
+        $phones = collect($s->phones ?? [])
+            ->take(2)
+            ->map(function ($row) {
+                $raw = is_array($row) ? ($row['raw'] ?? null) : (string)$row;
+                return [
+                    'raw' => $raw,
+                    'tel' => ContactNormalizer::telHrefFromRaw($raw),
+                ];
+            })->values()->all();
+
         $this->data = [
             'company_name' => $s->company_name,
             'company_text' => $s->company_text,
 
-            'phones'       => $s->phones ?: [],
+            'phones'       => $phones,
             'email'        => $s->email,
 
             'whatsapp'     => $s->whatsapp,
+            'facebook'     => $s->facebook,
             'tiktok'       => $s->tiktok,
-            'instagram'    => $s->instagram,
             'youtube'      => $s->youtube,
+            'telegram'     => $s->telegram,
 
             'address'      => $s->address,
             'map_embed'    => $s->map_embed,
@@ -56,7 +67,6 @@ class ContactSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                // левая колонка
                 Section::make('Компания')
                     ->schema([
                         TextInput::make('company_name')->label('Название компании')->maxLength(255),
@@ -68,21 +78,39 @@ class ContactSettings extends Page implements HasSchemas
                 Section::make('Контакты')
                     ->schema([
                         Repeater::make('phones')
-                            ->label('Телефоны')
+                            ->label('Телефоны (макс. 2)')
                             ->schema([
-                                TextInput::make('label')
-                                    ->label('Метка')
-                                    ->placeholder('Основной / WhatsApp / Офис')
-                                    ->maxLength(50),
-
-                                TextInput::make('number')
+                                TextInput::make('raw')
                                     ->label('Номер')
                                     ->placeholder('+7 777 000 00 00')
-                                    ->regex('/^\+?[0-9\-\s\(\)]+$/')
-                                    ->validationAttribute('номер телефона'),
+                                    ->helperText('Формат: +7 777 000 00 00')
+                                    ->regex('/^\+?\d[\d\s\-\(\)]{7,}$/')
+                                    ->validationAttribute('номер телефона')
+                                    ->maxLength(30)
+                                    ->extraInputAttributes(['x-mask' => '+7 999 999 99 99'])
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, $set) {
+                                        $set('tel', ContactNormalizer::telHrefFromRaw($state));
+                                    }),
                             ])
                             ->addActionLabel('Добавить телефон')
-                            ->columns(2)
+                            ->minItems(0)
+                            ->maxItems(2)
+                            ->dehydrateStateUsing(function ($state) {
+                                return collect($state ?? [])
+                                    ->take(2)
+                                    ->map(function ($row) {
+                                        $raw = trim((string) data_get($row, 'raw'));
+                                        if ($raw === '') return null;
+                                        return [
+                                            'raw' => $raw,
+                                            'tel' => ContactNormalizer::telHrefFromRaw($raw),
+                                        ];
+                                    })
+                                    ->filter()
+                                    ->values()
+                                    ->all();
+                            })
                             ->columnSpanFull(),
 
                         TextInput::make('email')->label('Email')->email()->maxLength(255),
@@ -90,28 +118,35 @@ class ContactSettings extends Page implements HasSchemas
                     ->columns(1)
                     ->columnSpan(6),
 
-                // правая колонка
                 Section::make('Соцсети')
                     ->schema([
                         TextInput::make('whatsapp')
-                            ->label('WhatsApp')
-                            ->placeholder('+7 777 000 00 00 или ссылка')
-                            ->rule('nullable|url'),
+                            ->label('WhatsApp (вводи номер)')
+                            ->placeholder('+7 777 000 00 00')
+                            ->helperText('Сохраним как ссылку вида https://wa.me/...')
+                            ->extraInputAttributes(['x-mask' => '+7 999 999 99 99'])
+                            ->maxLength(255),
 
-                        TextInput::make('instagram')
-                            ->label('Instagram')
-                            ->placeholder('@brand или https://instagram.com/brand')
-                            ->rule('nullable|url'),
+                        TextInput::make('facebook')
+                            ->label('Facebook (@handle или ссылка)')
+                            ->placeholder('@brand или https://facebook.com/brand')
+                            ->maxLength(255),
 
                         TextInput::make('tiktok')
-                            ->label('TikTok')
+                            ->label('TikTok (@handle или ссылка)')
                             ->placeholder('@brand или https://www.tiktok.com/@brand')
-                            ->rule('nullable|url'),
+                            ->maxLength(255),
 
                         TextInput::make('youtube')
-                            ->label('YouTube')
+                            ->label('YouTube (@handle или ссылка)')
                             ->placeholder('@brand или https://youtube.com/@brand')
-                            ->rule('nullable|url'),
+                            ->maxLength(255),
+
+                        TextInput::make('telegram')
+                            ->label('Telegram (@handle или ссылка)')
+                            ->placeholder('@brand или https://t.me/brand')
+                            ->maxLength(255),
+
                     ])
                     ->columns(1)
                     ->columnSpan(6),
@@ -119,39 +154,34 @@ class ContactSettings extends Page implements HasSchemas
                 Section::make('Адрес и карта')
                     ->schema([
                         Textarea::make('address')->label('Адрес')->rows(2),
-
-                        Textarea::make('map_embed')
-                            ->label('Карта (iframe или URL)')
-                            ->rows(3)
+                        Textarea::make('map_embed')->label('Карта (iframe или URL)')->rows(3)
                             ->helperText('Вставьте HTML iframe или прямую ссылку.'),
                     ])
                     ->columns(1)
                     ->columnSpan(6),
-            ])
-            ->columns(12); // двухколоночная сетка
-    }
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('save')
-                ->label('Сохранить')
-                ->icon('heroicon-o-check-circle')
-                ->color('primary')
-                ->action(function () {
-                    $payload = collect($this->data ?? [])->map(function ($v) {
-                        if (is_string($v)) {
-                            $v = trim($v);
+                Action::make('save')
+                    ->label('Сохранить')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('primary')
+                    ->action(function () {
+                        $payload = collect($this->data ?? [])->map(function ($v) {
+                            if (is_string($v)) {
+                                $v = trim($v);
+                                return $v === '' ? null : $v;
+                            }
                             return $v === '' ? null : $v;
-                        }
-                        return $v === '' ? null : $v;
-                    })->all();
+                        })->all();
 
-                    $s = ContactSetting::singleton();
-                    $s->fill($payload)->save();
+                        $payload['phones'] = collect($payload['phones'] ?? [])->take(2)->values()->all();
 
-                    Notification::make()->title('Контакты сохранены')->success()->send();
-                }),
-        ];
+                        ContactSetting::singleton()->fill($payload)->save();
+
+                        cache()->forget('site.contacts');
+
+                        Notification::make()->title('Контакты сохранены')->success()->send();
+                    }),
+            ])
+            ->columns(12);
     }
 }

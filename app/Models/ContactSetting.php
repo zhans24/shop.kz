@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Services\ContactNormalizer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class ContactSetting extends Model
 {
@@ -16,8 +17,9 @@ class ContactSetting extends Model
         'email',
         'whatsapp',
         'tiktok',
-        'instagram',
+        'facebook',
         'youtube',
+        'telegram',
         'address',
         'map_embed',
     ];
@@ -37,7 +39,21 @@ class ContactSetting extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (self $m) {
+            $m->phones   = ContactNormalizer::limitPhones($m->phones ?? []);
+            $m->facebook = ContactNormalizer::facebook($m->facebook ?? null);
+            $m->tiktok   = ContactNormalizer::tiktok($m->tiktok ?? null);
+            $m->youtube  = ContactNormalizer::youtube($m->youtube ?? null);
+            $m->telegram = ContactNormalizer::telegram($m->telegram ?? null);
+            $m->whatsapp = ContactNormalizer::whatsappLink($m->whatsapp ?? null);
+        });
+
         static::saved(fn () => cache()->forget('site.contacts'));
         static::deleted(fn () => cache()->forget('site.contacts'));
+    }
+
+    public function getWhatsappDigitsAttribute(): ?string
+    {
+        return ContactNormalizer::extractWhatsappDigits($this->whatsapp);
     }
 }

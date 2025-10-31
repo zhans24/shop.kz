@@ -17,7 +17,7 @@ class Category extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('image')->useFallbackUrl('/img/no-image.webp');
+        $this->addMediaCollection('image');
     }
 
     public function registerMediaConversions(Media $media = null): void
@@ -27,7 +27,7 @@ class Category extends Model implements HasMedia
     }
 
     protected $fillable = ['parent_id','slug','name','is_visible','is_popular','sort'];
-    protected $with = ['media'];
+    protected $with = ['media','seo'];
 
     protected $casts = [
         'parent_id' => 'int',

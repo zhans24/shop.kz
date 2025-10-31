@@ -26,7 +26,6 @@ class LeadForm
                             'done' => 'Завершён',
                         ])
                         ->default('new'),
-                    Textarea::make('message')->label('Комментарий')->rows(4),
                 ])->columns(2)->columnSpanFull(),
             ]);
     }
